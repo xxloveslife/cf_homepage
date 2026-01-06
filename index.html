@@ -1,62 +1,74 @@
-<div id="dashboard">
-    <div class="panel">
-        <h3>SYSTEM STATUS</h3>
-        <p id="time"></p>
-        <p id="location">定位中...</p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的赛博空间</title>
+    <style>
+        /* 关键：必须设置背景为黑色，否则你看不到文字 */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: #0a0a0a; /* 黑色背景 */
+            overflow: hidden; font-family: 'Segoe UI', sans-serif; 
+        }
+        
+        /* 之前给你的粒子画布样式 */
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+        /* 你刚才提供的面板样式 */
+        #dashboard {
+            position: absolute; top: 20px; left: 20px;
+            z-index: 5; display: flex; flex-direction: column; gap: 20px;
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(3, 233, 244, 0.4);
+            padding: 15px; border-radius: 10px;
+            color: #03e9f4; width: 250px;
+            box-shadow: 0 0 15px rgba(3, 233, 244, 0.1);
+        }
+        h3 { font-size: 0.8rem; margin: 0 0 10px 0; border-bottom: 1px solid rgba(3, 233, 244, 0.2); }
+        textarea {
+            width: 100%; height: 100px;
+            background: transparent; border: none; color: white;
+            outline: none; resize: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas-container"></canvas>
+
+    <div id="dashboard">
+        <div class="panel">
+            <h3>SYSTEM STATUS</h3>
+            <p id="time"></p>
+            <p id="location">定位中...</p>
+        </div>
+        
+        <div class="panel">
+            <h3>CYBER NOTES (Auto-Save)</h3>
+            <textarea id="notes" placeholder="在此输入你的秘密笔记..."></textarea>
+        </div>
     </div>
-    
-    <div class="panel">
-        <h3>CYBER NOTES (Auto-Save)</h3>
-        <textarea id="notes" placeholder="在此输入你的秘密笔记..."></textarea>
-    </div>
-</div>
 
-<style>
-    #dashboard {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .panel {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(3, 233, 244, 0.4);
-        padding: 15px;
-        border-radius: 10px;
-        color: #03e9f4;
-        width: 250px;
-    }
-    h3 { font-size: 0.8rem; margin: 0 0 10px 0; border-bottom: 1px solid rgba(3, 233, 244, 0.2); }
-    textarea {
-        width: 100%; height: 100px;
-        background: transparent; border: none; color: white;
-        outline: none; resize: none;
-    }
-</style>
+    <script>
+        // 这里放入之前的 Canvas 粒子代码（为了简洁此处略过，记得加上）
+        // 以及你刚才的实时时间、地理位置、自动保存代码
+        setInterval(() => {
+            document.getElementById('time').innerText = "CLOCK: " + new Date().toLocaleTimeString();
+        }, 1000);
 
-<script>
-    // 1. 实时时间更新
-    setInterval(() => {
-        document.getElementById('time').innerText = "CLOCK: " + new Date().toLocaleTimeString();
-    }, 1000);
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('location').innerText = `LOC: ${data.city}, ${data.country_name}`;
+            });
 
-    // 2. 获取大致地理位置 (不需要高精度权限)
-    fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('location').innerText = `LOC: ${data.city}, ${data.country_name}`;
-        });
-
-    // 3. 自动保存笔记到本地存储 (LocalStorage)
-    const notesArea = document.getElementById('notes');
-    // 页面加载时读取
-    notesArea.value = localStorage.getItem('cyber_notes') || "";
-    // 输入时实时保存
-    notesArea.oninput = () => {
-        localStorage.setItem('cyber_notes', notesArea.value);
-    };
-</script>
+        const notesArea = document.getElementById('notes');
+        notesArea.value = localStorage.getItem('cyber_notes') || "";
+        notesArea.oninput = () => {
+            localStorage.setItem('cyber_notes', notesArea.value);
+        };
+    </script>
+</body>
+</html>
