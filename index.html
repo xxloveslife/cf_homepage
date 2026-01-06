@@ -2,73 +2,142 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>我的赛博空间</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Study Space | NCE3</title>
     <style>
-        /* 关键：必须设置背景为黑色，否则你看不到文字 */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background-color: #0a0a0a; /* 黑色背景 */
-            overflow: hidden; font-family: 'Segoe UI', sans-serif; 
-        }
+        :root { --main-cyan: #03e9f4; --glass-bg: rgba(255, 255, 255, 0.08); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #050505; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; color: white; }
         
-        /* 之前给你的粒子画布样式 */
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 
-        /* 你刚才提供的面板样式 */
-        #dashboard {
-            position: absolute; top: 20px; left: 20px;
-            z-index: 5; display: flex; flex-direction: column; gap: 20px;
-        }
-        .panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(3, 233, 244, 0.4);
-            padding: 15px; border-radius: 10px;
-            color: #03e9f4; width: 250px;
-            box-shadow: 0 0 15px rgba(3, 233, 244, 0.1);
-        }
-        h3 { font-size: 0.8rem; margin: 0 0 10px 0; border-bottom: 1px solid rgba(3, 233, 244, 0.2); }
-        textarea {
-            width: 100%; height: 100px;
-            background: transparent; border: none; color: white;
-            outline: none; resize: none;
-        }
+        /* 主容器布局 */
+        .layout { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: grid; grid-template-columns: 300px 1fr; gap: 20px; padding: 20px; box-sizing: border-box; }
+
+        .panel { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid rgba(3, 233, 244, 0.2); border-radius: 16px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+
+        /* 侧边栏样式 */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .stat-item { margin-bottom: 10px; font-size: 0.9rem; color: var(--main-cyan); text-shadow: 0 0 5px var(--main-cyan); }
+
+        /* 学习区（核心功能） */
+        .main-content { display: flex; flex-direction: column; justify-content: space-between; }
+        .quote-box { background: rgba(0, 0, 0, 0.4); padding: 30px; border-radius: 20px; border-left: 4px solid var(--main-cyan); }
+        .quote-en { font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; line-height: 1.2; }
+        .quote-cn { font-size: 1.1rem; color: #aaa; }
+
+        /* 专注计时器 */
+        .timer-display { font-size: 3rem; text-align: center; margin: 20px 0; font-family: 'Courier New', monospace; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        button { background: transparent; border: 1px solid var(--main-cyan); color: var(--main-cyan); padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: var(--main-cyan); color: black; box-shadow: 0 0 15px var(--main-cyan); }
+
+        /* 搜索框 */
+        .search-bar { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; outline: none; }
     </style>
 </head>
 <body>
     <canvas id="canvas-container"></canvas>
 
-    <div id="dashboard">
-        <div class="panel">
-            <h3>SYSTEM STATUS</h3>
-            <p id="time"></p>
-            <p id="location">定位中...</p>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="stat-item" id="clock">CLOCK: --:--:--</div>
+                <div class="stat-item" id="loc">LOC: Detecting...</div>
+                <div class="stat-item" id="weather">SYSTEM: Online</div>
+            </div>
+            
+            <div class="panel" style="flex: 1;">
+                <h3 style="color: var(--main-cyan); font-size: 0.8rem; margin-top: 0;">ANKI / QUICK NOTES</h3>
+                <textarea id="notes" style="width: 100%; height: 80%; background: transparent; border: none; color: #ddd; outline: none; resize: none;" placeholder="今日待背单词..."></textarea>
+            </div>
         </div>
-        
-        <div class="panel">
-            <h3>CYBER NOTES (Auto-Save)</h3>
-            <textarea id="notes" placeholder="在此输入你的秘密笔记..."></textarea>
+
+        <div class="main-content">
+            <div class="panel">
+                <input type="text" class="search-bar" placeholder="搜索单词 (Cambridge Dictionary)..." onkeydown="if(event.key==='Enter') window.open('https://dictionary.cambridge.org/dictionary/english-chinese-simplified/'+this.value)">
+            </div>
+
+            <div class="quote-box">
+                <div class="quote-en" id="nce-en">Patience is a virtue.</div>
+                <div class="quote-cn" id="nce-cn">忍耐是一种美德。</div>
+                <button onclick="refreshQuote()" style="margin-top: 15px; font-size: 0.7rem;">NEXT SENTENCE</button>
+            </div>
+
+            <div class="panel" style="text-align: center;">
+                <h3 style="margin-top: 0;">FOCUS TIMER</h3>
+                <div class="timer-display" id="timer">25:00</div>
+                <div class="btn-group">
+                    <button onclick="toggleTimer()">START / PAUSE</button>
+                    <button onclick="resetTimer()">RESET</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // 这里放入之前的 Canvas 粒子代码（为了简洁此处略过，记得加上）
-        // 以及你刚才的实时时间、地理位置、自动保存代码
-        setInterval(() => {
-            document.getElementById('time').innerText = "CLOCK: " + new Date().toLocaleTimeString();
-        }, 1000);
+        /* 1. NCE3 语料库（你可以自行添加更多） */
+        const nceData = [
+            {en: "Justice to-the-past is trust to-the-future.", cn: "对过去的公正就是对未来的信任。"},
+            {en: "The facts report that the man was a genius.", cn: "事实证明，那个人是个天才。"},
+            {en: "It is a curious thing that we should be so very anxious to find out what other people are thinking.", cn: "奇怪的是，我们竟然如此急切地想知道别人在想什么。"},
+            {en: "In a world which is becoming increasingly noisy, silence is becoming a rare commodity.", cn: "在一个噪音日益严重的世界上，沉默正变成一种稀有商品。"}
+        ];
 
-        fetch('https://ipapi.co/json/')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('location').innerText = `LOC: ${data.city}, ${data.country_name}`;
+        function refreshQuote() {
+            const item = nceData[Math.floor(Math.random() * nceData.length)];
+            document.getElementById('nce-en').innerText = item.en;
+            document.getElementById('nce-cn').innerText = item.cn;
+        }
+
+        /* 2. 专注计时器逻辑 */
+        let timeLeft = 25 * 60;
+        let timerId = null;
+        function toggleTimer() {
+            if (timerId) { clearInterval(timerId); timerId = null; }
+            else {
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    const m = Math.floor(timeLeft / 60);
+                    const s = timeLeft % 60;
+                    document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                    if (timeLeft <= 0) clearInterval(timerId);
+                }, 1000);
+            }
+        }
+        function resetTimer() { timeLeft = 25 * 60; document.getElementById('timer').innerText = "25:00"; clearInterval(timerId); timerId = null; }
+
+        /* 3. 基础系统逻辑（时间、位置、保存） */
+        setInterval(() => document.getElementById('clock').innerText = "CLOCK: " + new Date().toLocaleTimeString(), 1000);
+        fetch('https://ipapi.co/json/').then(r => r.json()).then(d => document.getElementById('loc').innerText = `LOC: ${d.city}, ${d.country}`);
+        
+        const nt = document.getElementById('notes');
+        nt.value = localStorage.getItem('study_notes') || "";
+        nt.oninput = () => localStorage.setItem('study_notes', nt.value);
+
+        /* 4. 粒子背景动画 (保留之前的核心代码) */
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        let w, h, particles = [];
+        function init() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            particles = Array.from({length: 80}, () => ({
+                x: Math.random() * w, y: Math.random() * h,
+                vx: Math.random() * 1 - 0.5, vy: Math.random() * 1 - 0.5
+            }));
+        }
+        function draw() {
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = "#03e9f4";
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x<0 || p.x>w) p.vx *= -1;
+                if(p.y<0 || p.y>h) p.vy *= -1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
             });
-
-        const notesArea = document.getElementById('notes');
-        notesArea.value = localStorage.getItem('cyber_notes') || "";
-        notesArea.oninput = () => {
-            localStorage.setItem('cyber_notes', notesArea.value);
-        };
+            requestAnimationFrame(draw);
+        }
+        window.onresize = init; init(); draw();
     </script>
 </body>
 </html>
